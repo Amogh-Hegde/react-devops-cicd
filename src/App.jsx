@@ -1,121 +1,147 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [deploymentCount, setDeploymentCount] = useState(3)
+  const [releaseNotes, setReleaseNotes] = useState([])
+  const [status, setStatus] = useState('loading')
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadReleaseNotes() {
+      try {
+        const response = await fetch(
+          'https://jsonplaceholder.typicode.com/posts?_limit=3',
+        )
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        if (isMounted) {
+          setReleaseNotes(data)
+          setStatus('success')
+        }
+      } catch {
+        if (isMounted) {
+          setStatus('error')
+        }
+      }
+    }
+
+    loadReleaseNotes()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <main className="page-shell">
+      <section className="hero-panel">
+        <div className="eyebrow">React + Vite DevOps Starter</div>
+        <h1>Ship a frontend app with Jenkins, Docker, Trivy, and Vercel.</h1>
+        <p className="hero-copy">
+          This demo UI mirrors the pipeline in this repository: lint the code,
+          scan for vulnerabilities, build the app, package it with Docker, and
+          deploy from Jenkins.
+        </p>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+        <div className="hero-actions">
+          <a
+            className="primary-action"
+            href="https://vite.dev/guide/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Read Vite Docs
+          </a>
+          <button
+            type="button"
+            className="secondary-action"
+            onClick={() => setDeploymentCount((count) => count + 1)}
+          >
+            Simulate Deploy #{deploymentCount}
+          </button>
         </div>
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <section className="stats-grid" aria-label="Pipeline summary">
+        <article className="stat-card">
+          <span className="stat-label">Lint</span>
+          <strong>ESLint checks</strong>
+          <p>Runs before every build to catch React and JavaScript issues.</p>
+        </article>
+        <article className="stat-card">
+          <span className="stat-label">Security</span>
+          <strong>Trivy filesystem scan</strong>
+          <p>Scans the workspace for known vulnerabilities and misconfigurations.</p>
+        </article>
+        <article className="stat-card">
+          <span className="stat-label">Release</span>
+          <strong>Jenkins to Vercel</strong>
+          <p>Build artifacts are deployed to Vercel with the CLI and token auth.</p>
+        </article>
+      </section>
+
+      <section className="content-grid">
+        <article className="panel">
+          <div className="panel-header">
+            <div>
+              <div className="eyebrow">Live API Example</div>
+              <h2>Recent release notes</h2>
+            </div>
+            <span className={`status-pill status-${status}`}>
+              {status === 'loading' && 'Fetching'}
+              {status === 'success' && 'Live'}
+              {status === 'error' && 'Fallback needed'}
+            </span>
+          </div>
+
+          {status === 'loading' && (
+            <p className="helper-text">
+              Loading sample items from JSONPlaceholder to demonstrate API usage.
+            </p>
+          )}
+
+          {status === 'error' && (
+            <p className="helper-text">
+              The sample API could not be reached. Your CI/CD setup still works
+              locally and in Jenkins.
+            </p>
+          )}
+
+          {status === 'success' && (
+            <ul className="release-list">
+              {releaseNotes.map((note) => (
+                <li key={note.id}>
+                  <strong>{note.title}</strong>
+                  <p>{note.body}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
+
+        <article className="panel">
+          <div className="eyebrow">Pipeline Stages</div>
+          <h2>What Jenkins will do</h2>
+          <ol className="pipeline-list">
+            <li>Clone the GitHub repository</li>
+            <li>Install packages with npm</li>
+            <li>Run ESLint</li>
+            <li>Run Trivy filesystem scan</li>
+            <li>Build the Vite application</li>
+            <li>Build the Docker image</li>
+            <li>Optionally push to Docker Hub</li>
+            <li>Deploy to Vercel</li>
+          </ol>
+        </article>
+      </section>
+    </main>
   )
 }
 
