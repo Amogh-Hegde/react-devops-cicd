@@ -1,10 +1,9 @@
 pipeline {
   agent any
 
-    tools {
+  tools {
     nodejs 'nodejs'
   }
-
 
   options {
     timestamps()
@@ -13,16 +12,16 @@ pipeline {
   }
 
   environment {
-    // Non-secret environment variables used across the pipeline.
     PATH = "/usr/local/bin:/opt/homebrew/bin:${env.PATH}"
     DOCKER_IMAGE_NAME = 'react-vite-devops-cicd'
+    DOCKERHUB_USERNAME = 'amoghhegde'
     TRIVY_SEVERITY = 'HIGH,CRITICAL'
   }
 
   stages {
+
     stage('Clone Repository') {
       steps {
-        // Jenkins checks out the GitHub repository configured for this job.
         checkout scm
       }
     }
@@ -38,19 +37,19 @@ pipeline {
         sh 'npm run lint'
       }
     }
-    
+
     stage('Trivy Filesystem Scan') {
-  steps {
-    sh '''
-      /usr/local/bin/trivy fs \
-        --scanners vuln,secret,misconfig \
-        --severity "${TRIVY_SEVERITY}" \
-        --exit-code 0 \
-        --no-progress \
-        .
-    '''
-  }
-}
+      steps {
+        sh '''
+          /usr/local/bin/trivy fs \
+            --scanners vuln,secret,misconfig \
+            --severity "${TRIVY_SEVERITY}" \
+            --exit-code 0 \
+            --no-progress \
+            .
+        '''
+      }
+    }
 
     stage('Build React App') {
       steps {
@@ -59,37 +58,35 @@ pipeline {
     }
 
     stage('Check Docker') {
-  steps {
-    sh 'docker --version'
-    sh 'docker ps'
-  }
-}
+      steps {
+        sh 'docker --version'
+        sh 'docker ps'
+      }
+    }
+
     stage('Build Docker Image') {
       steps {
-        script {
-          env.DOCKERHUB_USERNAME = 'amoghhegde'
-        }
-        {
-          sh '''
-            docker build \
-              -t "${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}" \
-              -t "${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest" \
-              .
-          '''
-        }
+        sh '''
+          docker build \
+            -t "${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}" \
+            -t "${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest" \
+            .
+        '''
       }
     }
 
     stage('Push Docker Image') {
       steps {
         withCredentials([
-          string(credentialsId: 'dockerhub-username', variable: 'DOCKERHUB_USERNAME'),
           string(credentialsId: 'dockerhub-password', variable: 'DOCKERHUB_PASSWORD')
         ]) {
           sh '''
             echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+
             docker push "${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}"
+
             docker push "${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest"
+
             docker logout
           '''
         }
@@ -99,13 +96,13 @@ pipeline {
     stage('Deploy To Vercel') {
       steps {
         withCredentials([
-          string(credentialsId: 'vercel-token', variable: 'VERCEL_TOKEN'),
-          string(credentialsId: 'vercel-org-id', variable: 'VERCEL_ORG_ID'),
-          string(credentialsId: 'vercel-project-id', variable: 'VERCEL_PROJECT_ID')
+          string(credentialsId: 'vercel-token', variable: 'VERCEL_TOKEN')
         ]) {
           sh '''
             npx vercel@latest pull --yes --environment=production --token="${VERCEL_TOKEN}"
+
             npx vercel@latest build --prod --token="${VERCEL_TOKEN}"
+
             npx vercel@latest deploy --prebuilt --prod --token="${VERCEL_TOKEN}"
           '''
         }
