@@ -33,14 +33,14 @@ pipeline {
     }
 
     stage('ESLint Code Quality') {
-      steps {
-        sh '''
-          npx eslint . -f stylish > eslint-report.txt || true
-        '''
+  steps {
+    sh '''
+      npx eslint . -f json -o eslint-report.json || true
+    '''
 
-        archiveArtifacts artifacts: 'eslint-report.txt'
-      }
-    }
+    archiveArtifacts artifacts: 'eslint-report.json'
+  }
+}
 
     stage('Trivy Filesystem Scan') {
   steps {
