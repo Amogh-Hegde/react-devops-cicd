@@ -33,23 +33,26 @@ pipeline {
     }
 
     stage('ESLint Code Quality') {
-      steps {
-        sh 'npm run lint'
-      }
-    }
+  steps {
+    sh 'npm run lint > eslint-report.txt || true'
+    archiveArtifacts artifacts: 'eslint-report.txt'
+  }
+}
 
     stage('Trivy Filesystem Scan') {
-      steps {
-        sh '''
-          /usr/local/bin/trivy fs \
-            --scanners vuln,secret,misconfig \
-            --severity "${TRIVY_SEVERITY}" \
-            --exit-code 0 \
-            --no-progress \
-            .
-        '''
-      }
-    }
+  steps {
+    sh '''
+      /usr/local/bin/trivy fs \
+        --scanners vuln,secret,misconfig \
+        --severity "${TRIVY_SEVERITY}" \
+        --format table \
+        --output trivy-report.txt \
+        .
+    '''
+
+    archiveArtifacts artifacts: 'trivy-report.txt'
+  }
+}
 
     stage('Build React App') {
       steps {
