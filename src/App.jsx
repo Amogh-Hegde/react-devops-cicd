@@ -43,7 +43,7 @@ function App() {
     <main className="page-shell">
       <section className="hero-panel">
         <div className="eyebrow">React + Vite DevOps Starter</div>
-        <h1>NIN AMMAN SHATA KEYA SULEG HUTID SULE MAGNE lol</h1>
+        <h1>WHY ARE YOU RUNNING?!?!?!?</h1>
         <h1>Ship a frontend app with Jenkins, Docker, Trivy, and Vercel.</h1>
         <p className="hero-copy">
           This demo UI mirrors the pipeline in this repository: lint the code,
