@@ -43,20 +43,19 @@ pipeline {
     }
 
     stage('Trivy Filesystem Scan') {
-      steps {
-        sh '''
-          /usr/local/bin/trivy fs \
-            --scanners vuln,secret,misconfig \
-            --severity "${TRIVY_SEVERITY}" \
-            --format template \
-            --template "@contrib/html.tpl" \
-            --output trivy-report.html \
-            .
-        '''
+  steps {
+    sh '''
+      /usr/local/bin/trivy fs \
+        --scanners vuln,secret,misconfig \
+        --severity "${TRIVY_SEVERITY}" \
+        --format json \
+        --output trivy-report.json \
+        .
+    '''
 
-        archiveArtifacts artifacts: 'trivy-report.html'
-      }
-    }
+    archiveArtifacts artifacts: 'trivy-report.json'
+  }
+}
 
     stage('Build React App') {
       steps {
