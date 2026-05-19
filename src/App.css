@@ -118,7 +118,18 @@
   color: #915a00;
 }
 
+.status-checking,
+.status-submitting {
+  background: rgba(255, 209, 102, 0.18);
+  color: #915a00;
+}
+
 .status-success {
+  background: rgba(57, 173, 91, 0.15);
+  color: #24653a;
+}
+
+.status-online {
   background: rgba(57, 173, 91, 0.15);
   color: #24653a;
 }
@@ -126,6 +137,16 @@
 .status-error {
   background: rgba(200, 58, 58, 0.14);
   color: #8d2626;
+}
+
+.status-offline {
+  background: rgba(200, 58, 58, 0.14);
+  color: #8d2626;
+}
+
+.status-idle {
+  background: rgba(16, 33, 62, 0.08);
+  color: var(--text-h);
 }
 
 .release-list,
@@ -162,6 +183,68 @@
 
 .helper-text {
   margin-top: 18px;
+}
+
+.contact-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.field span {
+  font-size: 0.95rem;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  font: inherit;
+  color: var(--text-h);
+  background: rgba(255, 255, 255, 0.78);
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: 2px solid rgba(16, 33, 62, 0.2);
+  border-color: rgba(16, 33, 62, 0.32);
+}
+
+.form-submit {
+  justify-self: start;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 20px;
+  font: inherit;
+  font-weight: 700;
+  color: #10213e;
+  background: #ffd166;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.form-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.form-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 @media (max-width: 900px) {
