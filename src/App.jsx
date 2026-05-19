@@ -1,55 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import './App.css'
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'https://react-devops-cicd.onrender.com'
 
 function App() {
-  const [serverStatus, setServerStatus] = useState('checking')
-  const [serverMessage, setServerMessage] = useState('Checking backend status...')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     message: '',
   })
-  const [submitStatus, setSubmitStatus] = useState('idle')
-  const [submitMessage, setSubmitMessage] = useState(
-    'Fill out the form and send a message to MongoDB through your backend.',
-  )
-
-  useEffect(() => {
-    let isMounted = true
-
-    async function checkBackendHealth() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/`)
-
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`)
-        }
-
-        const data = await response.text()
-
-        if (isMounted) {
-          setServerStatus('online')
-          setServerMessage(data || 'Backend is running')
-        }
-      } catch {
-        if (isMounted) {
-          setServerStatus('offline')
-          setServerMessage(
-            'Could not reach the backend. Check Render deployment, CORS, or the API URL.',
-          )
-        }
-      }
-    }
-
-    checkBackendHealth()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
+  const [status, setStatus] = useState('idle')
+  const [feedback, setFeedback] = useState('')
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -62,8 +24,8 @@ function App() {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    setSubmitStatus('submitting')
-    setSubmitMessage('Sending your message to the backend...')
+    setStatus('submitting')
+    setFeedback('Sending your message...')
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/contact`, {
@@ -84,148 +46,112 @@ function App() {
         throw new Error('Backend did not confirm success')
       }
 
-      setSubmitStatus('success')
-      setSubmitMessage('Message saved successfully. Your backend responded with success.')
       setFormData({
         name: '',
         email: '',
         message: '',
       })
+      setStatus('success')
+      setFeedback('Message submitted successfully.')
     } catch {
-      setSubmitStatus('error')
-      setSubmitMessage(
-        'Message could not be sent. Confirm the backend is running and MongoDB is connected.',
-      )
+      setStatus('error')
+      setFeedback('Could not submit the message. Please try again.')
     }
   }
 
   return (
-    <main className="page-shell">
-      <section className="hero-panel">
-        <div className="eyebrow">Frontend Connected To Render Backend</div>
-        <h1>Contact form powered by React, Express, MongoDB, and Render.</h1>
-        <p className="hero-copy">
-          This frontend now matches your backend API. It checks the server health
-          endpoint and submits contact messages to
-          <code>{`${API_BASE_URL}/api/contact`}</code>.
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        padding: '24px',
+      }}
+    >
+      <section
+        style={{
+          width: '100%',
+          maxWidth: '680px',
+          padding: '32px',
+          borderRadius: '24px',
+          background: 'rgba(255, 252, 247, 0.92)',
+          boxShadow: '0 18px 40px -24px rgba(16, 33, 62, 0.18)',
+        }}
+      >
+        <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>
+          Contact Landing Page
+        </p>
+        <h1 style={{ marginTop: '12px', marginBottom: '12px' }}>
+          Send us your information
+        </h1>
+        <p style={{ marginBottom: '24px' }}>
+          Fill out the form below and the data will be sent to your backend.
         </p>
 
-        <div className="hero-actions">
-          <a
-            className="primary-action"
-            href={API_BASE_URL}
-            target="_blank"
-            rel="noreferrer"
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: 'grid', gap: '16px' }}
+        >
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Your name"
+            required
+            style={inputStyle}
+          />
+
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Your email"
+            required
+            style={inputStyle}
+          />
+
+          <textarea
+            name="message"
+            value={formData.message}
+            onChange={handleChange}
+            placeholder="Your message"
+            rows="5"
+            required
+            style={{ ...inputStyle, resize: 'vertical' }}
+          />
+
+          <button
+            type="submit"
+            disabled={status === 'submitting'}
+            style={{
+              padding: '14px 18px',
+              border: 0,
+              borderRadius: '999px',
+              background: '#ffd166',
+              color: '#10213e',
+              fontWeight: 700,
+              cursor: status === 'submitting' ? 'wait' : 'pointer',
+            }}
           >
-            Open Backend URL
-          </a>
-          <span className={`status-pill status-${serverStatus}`}>
-            {serverStatus === 'checking' && 'Checking backend'}
-            {serverStatus === 'online' && 'Backend online'}
-            {serverStatus === 'offline' && 'Backend offline'}
-          </span>
-        </div>
-      </section>
+            {status === 'submitting' ? 'Submitting...' : 'Submit'}
+          </button>
+        </form>
 
-      <section className="stats-grid" aria-label="Backend summary">
-        <article className="stat-card">
-          <span className="stat-label">Backend Root</span>
-          <strong>{API_BASE_URL}</strong>
-          <p>{serverMessage}</p>
-        </article>
-        <article className="stat-card">
-          <span className="stat-label">POST Endpoint</span>
-          <strong>/api/contact</strong>
-          <p>Sends `name`, `email`, and `message` as JSON to your Express server.</p>
-        </article>
-        <article className="stat-card">
-          <span className="stat-label">Database Flow</span>
-          <strong>MongoDB via Mongoose</strong>
-          <p>Submitted messages are saved by the `Message` model in `backend/server.js`.</p>
-        </article>
-      </section>
-
-      <section className="content-grid">
-        <article className="panel">
-          <div className="panel-header">
-            <div>
-              <div className="eyebrow">Send A Message</div>
-              <h2>Contact API demo</h2>
-            </div>
-            <span className={`status-pill status-${submitStatus}`}>
-              {submitStatus === 'idle' && 'Ready'}
-              {submitStatus === 'submitting' && 'Submitting'}
-              {submitStatus === 'success' && 'Saved'}
-              {submitStatus === 'error' && 'Failed'}
-            </span>
-          </div>
-
-          <form className="contact-form" onSubmit={handleSubmit}>
-            <label className="field">
-              <span>Name</span>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your name"
-                required
-              />
-            </label>
-
-            <label className="field">
-              <span>Email</span>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                required
-              />
-            </label>
-
-            <label className="field">
-              <span>Message</span>
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                placeholder="Write your message"
-                rows="5"
-                required
-              />
-            </label>
-
-            <button
-              type="submit"
-              className="form-submit"
-              disabled={submitStatus === 'submitting'}
-            >
-              {submitStatus === 'submitting' ? 'Sending...' : 'Send message'}
-            </button>
-          </form>
-
-          <p className="helper-text">{submitMessage}</p>
-        </article>
-
-        <article className="panel">
-          <div className="eyebrow">Backend Contract</div>
-          <h2>What the frontend expects</h2>
-          <ol className="pipeline-list">
-            <li>`GET /` returns a plain text health message</li>
-            <li>`POST /api/contact` accepts JSON request bodies</li>
-            <li>Payload fields are `name`, `email`, and `message`</li>
-            <li>CORS is enabled in Express, so the frontend can call Render directly</li>
-            <li>The API base URL can be overridden with `VITE_API_BASE_URL`</li>
-            <li>
-              Successful submission expects <code>{'{ "success": true }'}</code>
-            </li>
-          </ol>
-        </article>
+        {feedback ? <p style={{ marginTop: '18px' }}>{feedback}</p> : null}
       </section>
     </main>
   )
+}
+
+const inputStyle = {
+  width: '100%',
+  boxSizing: 'border-box',
+  padding: '14px 16px',
+  borderRadius: '14px',
+  border: '1px solid rgba(16, 33, 62, 0.16)',
+  font: 'inherit',
 }
 
 export default App
