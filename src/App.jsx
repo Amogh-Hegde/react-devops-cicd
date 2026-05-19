@@ -5,7 +5,7 @@ function App() {
   const [deploymentCount, setDeploymentCount] = useState(3)
   const [releaseNotes, setReleaseNotes] = useState([])
   const [status, setStatus] = useState('loading')
-
+  const unusedVariable = "demo" //ESLINT ERROR 
   useEffect(() => {
     let isMounted = true
 
