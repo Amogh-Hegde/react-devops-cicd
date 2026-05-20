@@ -79,7 +79,7 @@ function App() {
         }}
       >
         <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>
-          Contact Landing Page hi
+          Contact Landing Page 
         </p>
         <h1 style={{ marginTop: '12px', marginBottom: '12px' }}>
           Send us your information
