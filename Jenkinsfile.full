@@ -142,6 +142,45 @@ pipeline {
                 "message": "Test Entry"
               }')"
 
+            WIPE_STATUS="$(curl -sS -o "$WIPE_RESPONSE_FILE" -w "%{http_code}" \
+              -X DELETE "${BACKEND_BASE_URL}/api/contact/cleanup" \
+              -H "X-Pipeline-Secret: ${PIPELINE_SECRET}")"
+
+            export SMOKE_STATUS
+            export WIPE_STATUS
+            export SMOKE_RESPONSE_FILE
+            export WIPE_RESPONSE_FILE
+            export BACKEND_BASE_URL
+            export BUILD_NUMBER
+            export BUILD_TAG
+
+            node <<'EOF'
+            const fs = require('fs')
+
+            const report = {
+              timestamp: new Date().toISOString(),
+              buildNumber: process.env.BUILD_NUMBER,
+              buildTag: process.env.BUILD_TAG,
+              backendBaseUrl: process.env.BACKEND_BASE_URL,
+              smoke: {
+                method: 'POST',
+                endpoint: '/api/contact',
+                statusCode: Number(process.env.SMOKE_STATUS),
+                success: /^2/.test(process.env.SMOKE_STATUS || ''),
+                response: fs.readFileSync(process.env.SMOKE_RESPONSE_FILE || '', 'utf8')
+              },
+              cleanup: {
+                method: 'DELETE',
+                endpoint: '/api/contact/cleanup',
+                statusCode: Number(process.env.WIPE_STATUS),
+                success: /^2/.test(process.env.WIPE_STATUS || ''),
+                response: fs.readFileSync(process.env.WIPE_RESPONSE_FILE || '', 'utf8')
+              }
+            }
+
+            fs.writeFileSync('backend-e2e-report.json', JSON.stringify(report, null, 2))
+            EOF
+
             case "$SMOKE_STATUS" in
               2*)
                 echo "Smoke POST succeeded with HTTP ${SMOKE_STATUS}"
@@ -152,10 +191,6 @@ pipeline {
                 exit 1
                 ;;
             esac
-
-            WIPE_STATUS="$(curl -sS -o "$WIPE_RESPONSE_FILE" -w "%{http_code}" \
-              -X DELETE "${BACKEND_BASE_URL}/api/contact/cleanup" \
-              -H "X-Pipeline-Secret: ${PIPELINE_SECRET}")"
 
             case "$WIPE_STATUS" in
               2*)
@@ -168,6 +203,8 @@ pipeline {
                 ;;
             esac
           '''
+
+          archiveArtifacts artifacts: 'backend-e2e-report.json'
         }
       }
     }
