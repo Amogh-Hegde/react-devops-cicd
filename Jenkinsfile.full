@@ -154,32 +154,30 @@ pipeline {
             export BUILD_NUMBER
             export BUILD_TAG
 
-            node <<'EOF'
-            const fs = require('fs')
-
-            const report = {
-              timestamp: new Date().toISOString(),
-              buildNumber: process.env.BUILD_NUMBER,
-              buildTag: process.env.BUILD_TAG,
-              backendBaseUrl: process.env.BACKEND_BASE_URL,
-              smoke: {
-                method: 'POST',
-                endpoint: '/api/contact',
-                statusCode: Number(process.env.SMOKE_STATUS),
-                success: /^2/.test(process.env.SMOKE_STATUS || ''),
-                response: fs.readFileSync(process.env.SMOKE_RESPONSE_FILE || '', 'utf8')
-              },
-              cleanup: {
-                method: 'DELETE',
-                endpoint: '/api/contact/cleanup',
-                statusCode: Number(process.env.WIPE_STATUS),
-                success: /^2/.test(process.env.WIPE_STATUS || ''),
-                response: fs.readFileSync(process.env.WIPE_RESPONSE_FILE || '', 'utf8')
-              }
-            }
-
-            fs.writeFileSync('backend-e2e-report.json', JSON.stringify(report, null, 2))
-            EOF
+            node -e "
+              const fs = require('fs');
+              const report = {
+                timestamp: new Date().toISOString(),
+                buildNumber: process.env.BUILD_NUMBER,
+                buildTag: process.env.BUILD_TAG,
+                backendBaseUrl: process.env.BACKEND_BASE_URL,
+                smoke: {
+                  method: 'POST',
+                  endpoint: '/api/contact',
+                  statusCode: Number(process.env.SMOKE_STATUS),
+                  success: /^2/.test(process.env.SMOKE_STATUS || ''),
+                  response: fs.readFileSync(process.env.SMOKE_RESPONSE_FILE, 'utf8')
+                },
+                cleanup: {
+                  method: 'DELETE',
+                  endpoint: '/api/contact/cleanup',
+                  statusCode: Number(process.env.WIPE_STATUS),
+                  success: /^2/.test(process.env.WIPE_STATUS || ''),
+                  response: fs.readFileSync(process.env.WIPE_RESPONSE_FILE, 'utf8')
+                }
+              };
+              fs.writeFileSync('backend-e2e-report.json', JSON.stringify(report, null, 2));
+            "
 
             case "$SMOKE_STATUS" in
               2*)
