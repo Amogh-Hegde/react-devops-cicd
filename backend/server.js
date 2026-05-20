@@ -27,6 +27,40 @@ app.post("/api/contact", async (req, res) => {
   res.json({ success: true })
 })
 
+app.delete("/api/contact/cleanup", async (req, res) => {
+  const pipelineSecret = req.get("X-Pipeline-Secret")
+
+  if (!process.env.PIPELINE_SECRET || pipelineSecret !== process.env.PIPELINE_SECRET) {
+    return res.status(403).json({ error: "Forbidden" })
+  }
+
+  try {
+    const filter = { email: "devops@assignment.com" }
+    const existingMessage = await Message.findOne(filter).lean()
+
+    if (!existingMessage) {
+      return res.status(200).json({
+        success: true,
+        deletedCount: 0,
+        message: "No matching test entry found"
+      })
+    }
+
+    const deleteResult = await Message.deleteMany(filter)
+
+    return res.status(200).json({
+      success: true,
+      deletedCount: deleteResult.deletedCount ?? 0
+    })
+  } catch (error) {
+    console.error("Cleanup route failed:", error)
+
+    return res.status(500).json({
+      error: "Internal server error"
+    })
+  }
+})
+
 app.get("/", (req, res) => {
   res.send("Backend Running")
 })

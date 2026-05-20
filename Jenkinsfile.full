@@ -114,6 +114,62 @@ pipeline {
         }
       }
     }
+
+    stage('E2E Backend Round-Trip Test') {
+      steps {
+        withCredentials([
+          string(credentialsId: 'pipeline-secret', variable: 'PIPELINE_SECRET')
+        ]) {
+          sh '''
+            set -eu
+
+            if [ -z "${BACKEND_BASE_URL:-}" ]; then
+              echo "BACKEND_BASE_URL is not set"
+              exit 1
+            fi
+
+            SMOKE_RESPONSE_FILE="$(mktemp)"
+            WIPE_RESPONSE_FILE="$(mktemp)"
+            trap 'rm -f "$SMOKE_RESPONSE_FILE" "$WIPE_RESPONSE_FILE"' EXIT
+
+            SMOKE_STATUS="$(curl -sS -o "$SMOKE_RESPONSE_FILE" -w "%{http_code}" \
+              -X POST "${BACKEND_BASE_URL}/api/contact" \
+              -H "Content-Type: application/json" \
+              --data '{
+                "name": "Jenkins-Bot",
+                "email": "devops@assignment.com",
+                "message": "Test Entry"
+              }')"
+
+            case "$SMOKE_STATUS" in
+              2*)
+                echo "Smoke POST succeeded with HTTP ${SMOKE_STATUS}"
+                ;;
+              *)
+                echo "Smoke POST failed with HTTP ${SMOKE_STATUS}"
+                cat "$SMOKE_RESPONSE_FILE"
+                exit 1
+                ;;
+            esac
+
+            WIPE_STATUS="$(curl -sS -o "$WIPE_RESPONSE_FILE" -w "%{http_code}" \
+              -X DELETE "${BACKEND_BASE_URL}/api/contact/cleanup" \
+              -H "X-Pipeline-Secret: ${PIPELINE_SECRET}")"
+
+            case "$WIPE_STATUS" in
+              2*)
+                echo "Cleanup DELETE succeeded with HTTP ${WIPE_STATUS}"
+                ;;
+              *)
+                echo "Cleanup DELETE failed with HTTP ${WIPE_STATUS}"
+                cat "$WIPE_RESPONSE_FILE"
+                exit 1
+                ;;
+            esac
+          '''
+        }
+      }
+    }
   }
 
   post {
