@@ -16,6 +16,7 @@ pipeline {
     DOCKER_IMAGE_NAME = 'react-vite-devops-cicd'
     DOCKERHUB_USERNAME = 'amoghhegde'
     TRIVY_SEVERITY = 'HIGH,CRITICAL'
+    BACKEND_BASE_URL = 'https://react-devops-cicd.onrender.com'
   }
 
   stages {
