@@ -84,7 +84,7 @@ function App() {
         <h1 style={{ marginTop: '12px', marginBottom: '12px' }}>
           Send us your information
         </h1>
-        <p style={{ marginBottom: '24px' }}>
+        <p style={{ marginBottom: '25px' }}>
           Fill out the form below and the data will be sent to your backend.
         </p>
 
